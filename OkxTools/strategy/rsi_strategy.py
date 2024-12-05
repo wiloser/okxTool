@@ -7,8 +7,8 @@ class RSIStrategy(BaseStrategy):
     包含RSI指标计算和交易信号生成
     """
 
-    def __init__(self, period=14, overbought=70, oversold=30):
-        super().__init__()
+    def __init__(self, period=14, overbought=70, oversold=30, debug_mode=False):
+        super().__init__(debug_mode=debug_mode)
         self.period = period
         self.overbought = overbought
         self.oversold = oversold
@@ -32,25 +32,23 @@ class RSIStrategy(BaseStrategy):
         return df.dropna()
 
     def on_data(self, row):
-        """
-        根据当前数据生成交易信号
-        :param row: Series, 当前数据行，包含RSI值
-        :return: list, 交易信号列表
-        """
         signals = []
+        if self.debug_mode:
+            print(f"Processing row: RSI={row['RSI']}, Position={self.position}")
 
-        # RSI低于超卖线且当前无持仓，生成买入信号
         if row['RSI'] < self.oversold and not self.position:
+            if self.debug_mode:
+                print(f"Buy Signal Generated: Price={row['Close']}")
             signals.append({
                 'type': 'long',
                 'price': row['Close'],
-                'stop_loss': row['Close'] * 0.95,  # 5%止损
-                'take_profit': row['Close'] * 1.10  # 10%止盈
+                'stop_loss': row['Close'] * 0.95,
+                'take_profit': row['Close'] * 1.10
             })
             self.position = 'long'
 
-        # RSI高于超买线且持有多仓，生成卖出信号
         elif row['RSI'] > self.overbought and self.position == 'long':
+            print(f"Sell Signal Generated: Price={row['Close']}")
             signals.append({
                 'type': 'exit',
                 'price': row['Close'],

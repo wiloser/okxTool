@@ -1,12 +1,13 @@
-import pandas as pd
-
 from .base_strategy import BaseStrategy
+
 
 class EMACrossoverStrategy(BaseStrategy):
     """
     简单均线交叉策略
     """
+
     def __init__(self, short_window=10, long_window=50):
+        super().__init__()
         self.short_window = short_window
         self.long_window = long_window
 

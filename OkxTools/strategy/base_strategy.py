@@ -2,6 +2,7 @@ class BaseStrategy:
     """
     策略基类，所有自定义策略应继承此类。
     """
+
     def __init__(self):
         pass
 
@@ -14,5 +15,11 @@ class BaseStrategy:
     def on_order(self, order):
         """
         处理订单的策略逻辑。
+        """
+        pass
+
+    def prepare_data(self, data):
+        """
+        准备策略所需的指标数据
         """
         pass

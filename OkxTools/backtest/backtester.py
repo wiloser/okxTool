@@ -94,6 +94,7 @@ class Backtester:
         :param strategy: 策略实例
         :return: dict, 回测报告
         """
+        data = strategy.prepare_data(data)
         for timestamp, row in data.iterrows():
             # 更新持仓状态
             positions_to_remove = []

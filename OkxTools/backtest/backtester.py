@@ -96,7 +96,8 @@ class Backtester:
         :return: dict, 回测报告
         """
         data = strategy.prepare_data(data)
-        for timestamp, row in data.iterrows():
+        for index, row in data.iterrows():
+            timestamp = row['Timestamp']
             # 更新持仓状态
             positions_to_remove = []
             for i, position in enumerate(self.positions):
@@ -123,10 +124,10 @@ class Backtester:
                         self.positions = []
                     elif signal['type'] == 'long' and not self.positions:
                         self.open_position(timestamp, signal)
-
             # 记录权益曲线
             self.equity_curve.append({
-                'timestamp': timestamp,
+                # todo 有问题
+                'timestamp': timestamp.timestamp(),
                 'balance': self.balance
             })
 

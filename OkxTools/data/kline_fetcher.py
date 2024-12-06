@@ -87,7 +87,7 @@ def fetch_existing_data(csv_file):
         return None, []
 
     try:
-        data = pd.read_csv(csv_file)
+        data = pd.read_csv(csv_file, dtype={'Timestamp': int})
         if data.empty:
             return None, []
 
@@ -112,6 +112,9 @@ def fetch_past_klines(inst_id, bar, csv_file):
     with tqdm(desc=f"Fetching ***{inst_id}-{bar}*** historical data", unit="records", leave=True) as pbar:
         start_after = None
         while True:
+            if last_existing_timestamp and time.time() * 1000 - last_existing_timestamp < 1000 * 60 * 60 * 24:
+                print("\nRequested data is older than existing data. Stopping...")
+                break
             # 调用 API 获取数据
             data = get_klines(inst_id, bar, limit=100, after=start_after)
             if not data:
@@ -121,6 +124,7 @@ def fetch_past_klines(inst_id, bar, csv_file):
             # 如果请求的数据早于现有数据的时间戳，停止
             if last_existing_timestamp and int(data[-1][0]) <= last_existing_timestamp:
                 print("\nRequested data is older than existing data. Stopping...")
+                all_data.extend(data)
                 break
 
             # 将新数据添加到 all_data 列表
@@ -139,27 +143,34 @@ def fetch_past_klines(inst_id, bar, csv_file):
 
             # 避免频繁请求
             time.sleep(0.1)
-
+    # 转换为浮点数嵌套列表
+    all_data = [[float(item) for item in sublist] for sublist in all_data]
     # 合并现有数据和新数据
     combined_data = existing_data + all_data
-
-    # 保存数据到 CSV 文件
-    with open(csv_file, "w", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow(["Timestamp", "Open", "High", "Low", "Close", "Volume1", "Volume2", "Volume3", "f"])
-        writer.writerows(combined_data)
-    print(f"\nData saved to {csv_file}")
+    # 将 combined_data 转换为 pandas DataFrame
+    df = pd.DataFrame(
+        combined_data,
+        columns=["Timestamp", "Open", "High", "Low", "Close", "Volume1", "Volume2", "Volume3", "f"],
+    )
+    # 根据 'Timestamp' 列去重（保留最新的）
+    df_unique = df.drop_duplicates(subset=["Timestamp"])
+    df_unique["Timestamp"] = df_unique["Timestamp"].astype(int)
+    # 对 DataFrame 按 "Volume" 列降序排序
+    df_unique = df_unique.sort_values(by="Timestamp", ascending=False)
+    df_unique.to_csv(csv_file, index=False)
+    print(f"Data saved to {csv_file}")
 
 
 if __name__ == "__main__":
-    # 获取所有现货交易品种并保存为 JSON 文件
-    print("Fetching all instruments...")
-    fetch_all_instruments(inst_type="SPOT")
-
-    # 获取历史 K 线数据
+    # # 获取所有现货交易品种并保存为 JSON 文件
+    # print("Fetching all instruments...")
+    # fetch_all_instruments(inst_type="SPOT")
+    #
+    # # 获取历史 K 线数据
     inst_id = "BTC-USDT-SWAP"  # 替换为您的交易对
     bar = "1D"  # 时间间隔
-    csv_file = os.path.join("data/csv", f"{inst_id}_{bar}_klines_past.csv")
-
-    print("Fetching past historical K-line data...")
-    fetch_past_klines(inst_id, bar, csv_file)
+    # csv_file = os.path.join("data/csv", f"{inst_id}_{bar}_klines_past.csv")
+    #
+    # print("Fetching past historical K-line data...")
+    data = get_klines(inst_id, bar, limit=100, before='1733068800000')
+    print(data)

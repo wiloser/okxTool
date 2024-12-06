@@ -3,12 +3,13 @@ class Backtester:
     回测框架，支持更复杂的交易信号和风险管理
     """
 
-    def __init__(self, initial_balance=10000, risk_per_trade=0.02):
+    def __init__(self, initial_balance=10000, risk_per_trade=0.02, debug_mode=False):
         """
         初始化回测框架。
         :param initial_balance: 初始资金
         :param risk_per_trade: 每笔交易的风险占总资金的比例
         """
+        self.debug_mode = debug_mode
         self.initial_balance = initial_balance
         self.risk_per_trade = risk_per_trade
         self.balance = initial_balance
@@ -149,7 +150,7 @@ class Backtester:
 
         # 计算交易统计
         profitable_trades = [t for t in self.trades if t.get('profit', 0) > 0]
-        losing_trades = [t for t in self.trades if t.get('profit', 0) <= 0]
+        losing_trades = [t for t in self.trades if t.get('profit', 0) < 0]
 
         # 计算最大回撤
         peak = self.initial_balance

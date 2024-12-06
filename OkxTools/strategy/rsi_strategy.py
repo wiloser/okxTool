@@ -7,8 +7,8 @@ class RSIStrategy(BaseStrategy):
     包含RSI指标计算和交易信号生成
     """
 
-    def __init__(self, period=14, overbought=70, oversold=30, debug_mode=False):
-        super().__init__(debug_mode=debug_mode)
+    def __init__(self, period=14, overbought=70, oversold=30):
+        super().__init__()
         self.period = period
         self.overbought = overbought
         self.oversold = oversold
@@ -33,12 +33,8 @@ class RSIStrategy(BaseStrategy):
 
     def on_data(self, row):
         signals = []
-        if self.debug_mode:
-            print(f"Processing row: RSI={row['RSI']}, Position={self.position}")
 
         if row['RSI'] < self.oversold and not self.position:
-            if self.debug_mode:
-                print(f"Buy Signal Generated: Price={row['Close']}")
             signals.append({
                 'type': 'long',
                 'price': row['Close'],
@@ -48,7 +44,6 @@ class RSIStrategy(BaseStrategy):
             self.position = 'long'
 
         elif row['RSI'] > self.overbought and self.position == 'long':
-            print(f"Sell Signal Generated: Price={row['Close']}")
             signals.append({
                 'type': 'exit',
                 'price': row['Close'],
@@ -58,18 +53,3 @@ class RSIStrategy(BaseStrategy):
             self.position = None
 
         return signals
-
-    def run_backtest(self, data, backtester):
-        """
-        运行回测的完整流程
-        :param data: DataFrame, 原始数据
-        :param backtester: Backtester实例
-        :return: dict, 回测结果
-        """
-        # 准备数据（计算指标）
-        prepared_data = self.prepare_data(data)
-
-        # 运行回测
-        results = backtester.run(prepared_data, self)
-
-        return results

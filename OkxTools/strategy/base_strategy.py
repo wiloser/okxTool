@@ -3,8 +3,7 @@ class BaseStrategy:
     策略基类，所有自定义策略应继承此类。
     """
 
-    def __init__(self, debug_mode=False):
-        self.debug_mode = debug_mode
+    def __init__(self):
         pass
 
     def on_data(self, data):

@@ -120,20 +120,18 @@ def fetch_past_klines(inst_id, bar, csv_file):
                 print("\nNo more data available or error occurred.")
                 break
 
-            # 如果请求的数据早于现有数据的时间戳，停止
-            if last_existing_timestamp and int(data[-1][0]) <= last_existing_timestamp:
-                print("\nRequested data is older than existing data. Stopping...")
-                all_data.extend(data)
-                break
-
-            # 将新数据添加到 all_data 列表
-            all_data.extend(data)
-            total_records += len(data)
-            start_after = int(data[-1][0])  # 更新最后时间戳
-
             # 更新进度条
             pbar.update(len(data))
             pbar.set_postfix(total=total_records)
+
+            # 将新数据添加到 all_data 列表
+            all_data.extend(data)
+            # 如果请求的数据早于现有数据的时间戳，停止
+            if last_existing_timestamp and int(data[-1][0]) <= last_existing_timestamp:
+                print("\nRequested data is older than existing data. Stopping...")
+                break
+            total_records += len(data)
+            start_after = int(data[-1][0])  # 更新最后时间戳
 
             # 如果返回的数据量不足100，说明已经获取到最早的记录
             if len(data) < 100:
@@ -152,11 +150,11 @@ def fetch_past_klines(inst_id, bar, csv_file):
         columns=["Timestamp", "Open", "High", "Low", "Close", "Volume1", "Volume2", "Volume3", "f"],
     )
     # 根据 'Timestamp' 列去重（保留最新的）
-    df_unique = df.drop_duplicates(subset=["Timestamp"])
-    df_unique.loc[:, "Timestamp"] = df_unique["Timestamp"].astype(int)
+    df.drop_duplicates(subset=["Timestamp"], inplace=True)
+    df["Timestamp"] = df["Timestamp"].astype(int)
     # 对 DataFrame 按 "Volume" 列降序排序
-    df_unique = df_unique.sort_values(by="Timestamp", ascending=False)
-    df_unique.to_csv(csv_file, index=False)
+    df = df.sort_values(by="Timestamp", ascending=False)
+    df.to_csv(csv_file, index=False)
     print(f"Data saved to {csv_file}")
 
 

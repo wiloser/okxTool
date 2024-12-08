@@ -1,5 +1,4 @@
 import requests
-import csv
 import json
 import time
 from tqdm import tqdm
@@ -154,7 +153,7 @@ def fetch_past_klines(inst_id, bar, csv_file):
     )
     # 根据 'Timestamp' 列去重（保留最新的）
     df_unique = df.drop_duplicates(subset=["Timestamp"])
-    df_unique["Timestamp"] = df_unique["Timestamp"].astype(int)
+    df_unique.loc[:, "Timestamp"] = df_unique["Timestamp"].astype(int)
     # 对 DataFrame 按 "Volume" 列降序排序
     df_unique = df_unique.sort_values(by="Timestamp", ascending=False)
     df_unique.to_csv(csv_file, index=False)
